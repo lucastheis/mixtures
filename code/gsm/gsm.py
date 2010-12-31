@@ -1,5 +1,5 @@
 from numpy import ones, zeros, zeros_like, dot, multiply, sum, mean, cov, eye
-from numpy import square, sqrt, exp, log, pi, squeeze, diag
+from numpy import square, sqrt, exp, log, pi, squeeze, diag, round, sort
 from numpy.random import rand, randn
 from numpy.linalg import inv, det, eig
 from scipy.special import gamma, gammainc, gammaincinv
@@ -52,11 +52,11 @@ class GSM:
 		weights = posterior * self.scales.reshape(-1, 1)
 
 		# adjust prior over scales
-		self.priors = mean(posterior / sum(posterior, 0), 1)
+		self.priors = mean((posterior + 0.001) / sum(posterior + 0.001, 0), 1)
 
 		# adjust mean
-		self.mean = sum(dot(data, weights.T), 1) / sum(weights)
-		self.mean.resize([self.dim, 1])
+#		self.mean = sum(dot(data, weights.T), 1) / sum(weights)
+#		self.mean.resize([self.dim, 1])
 
 		# center data
 		tmp = data - self.mean
@@ -81,9 +81,12 @@ class GSM:
 		rcdf = lambda x: gammainc(self.dim / 2., square(x) / 2.)
 		icdf = lambda y: sqrt(2. * gammaincinv(self.dim / 2., y))
 
+		# center data
+		data = data - self.mean
+
 		# whiten data
-		E, V = eig(self.precision)
-		data = dot(dot(V, dot(diag(sqrt(E)), V.T)), data)
+		val, vec = eig(self.precision)
+		data = dot(dot(vec, dot(diag(sqrt(val)), vec.T)), data)
 
 		norm = sqrt(sum(square(data), 0))
 		data = data / norm

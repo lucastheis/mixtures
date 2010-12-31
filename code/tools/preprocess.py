@@ -7,7 +7,7 @@ def preprocess(data):
 	data = log(data + 1.)
 
 	# center
-	data = data - transpose([mean(data, 1)])
+	data = data - mean(data, 1).reshape(-1, 1)
 
 	# shuffle
 	data = data[:, permutation(data.shape[1])]

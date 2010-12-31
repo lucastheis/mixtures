@@ -1,4 +1,4 @@
-from numpy import multiply, dot, sum, mean, cov, sqrt, log, exp, pi
+from numpy import multiply, dot, sum, mean, cov, sqrt, log, exp, pi, argsort
 from numpy import ones, zeros, zeros_like, eye, round, squeeze, concatenate
 from numpy.random import multinomial
 from numpy.linalg import det, inv, eig
@@ -48,9 +48,6 @@ class MoGSM:
 		logpost = zeros([self.num_components, self.num_scales, data.shape[1]])
 
 		for epoch in range(num_epochs):
-			print round(self.logloss(data), 2),
-			print round(self.logloss(data_valid), 2)
-
 			# compute posterior over components and scales (E)
 			for i in range(self.num_components):
 				logpost[i, :, :] = self[i].logjoint(data) + log(self.priors[i])
@@ -59,12 +56,16 @@ class MoGSM:
 			# adjust priors over components (M)
 			self.priors = mean(sum(exp(logpost), 1), 1)
 
+			self.priors += 0.001
+			self.priors /= sum(self.priors)
+
 			# adjust remaining parameters (M)
 			for i in range(self.num_components):
 				self[i].train(data, exp(logpost[i, :, :]))
 
-		for i in range(self.num_components):
-			print round(self[i].scales, 4)
+
+			for i in range(self.num_components):
+				indices = argsort(self[i].scales)
 
 
 
