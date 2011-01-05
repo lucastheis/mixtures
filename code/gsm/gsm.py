@@ -22,6 +22,9 @@ class GSM:
 		# initial mean
 		self.mean = zeros([dim, 1])
 
+		# parameter of regularizing Dirichlet prior
+		self.alpha = 1.001
+
 
 
 	def sample(self, num_samples=1):
@@ -48,6 +51,8 @@ class GSM:
 		"""
 		"""
 
+		posterior = multiply(posterior, exp(self.logposterior(data)))
+
 		# helper variable
 		weights = posterior * self.scales.reshape(-1, 1)
 
@@ -55,8 +60,8 @@ class GSM:
 		self.priors = mean((posterior + 0.001) / sum(posterior + 0.001, 0), 1)
 
 		# adjust mean
-#		self.mean = sum(dot(data, weights.T), 1) / sum(weights)
-#		self.mean.resize([self.dim, 1])
+		self.mean = sum(dot(data, weights.T), 1) / sum(weights)
+		self.mean.resize([self.dim, 1])
 
 		# center data
 		tmp = data - self.mean
@@ -104,6 +109,12 @@ class GSM:
 
 	def loglikelihood(self, data):
 		return logsumexp(self.logjoint(data), 0)
+
+
+
+	def logposterior(self, data):
+		jnt = self.logjoint(data)
+		return jnt - logsumexp(jnt, 0)
 
 
 
