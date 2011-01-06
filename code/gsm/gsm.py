@@ -1,12 +1,26 @@
-from numpy import ones, zeros, zeros_like, dot, multiply, sum, mean, cov, eye
-from numpy import square, sqrt, exp, log, pi, squeeze, diag, round, sort
+"""
+An implementation of the finite Gaussian scale mixture.
+"""
+
+from numpy import ones, zeros, zeros_like, dot, multiply, sum, mean, cov
+from numpy import square, sqrt, exp, log, pi, squeeze, diag
 from numpy.random import rand, randn
 from numpy.linalg import inv, det, eig
-from scipy.special import gamma, gammainc, gammaincinv
+from scipy.special import gammaincinv
+from scipy.optimize import bisect
+from scipy.stats import chi
 from utils import logsumexp
 
 class GSM:
+	"""
+	Finite Gaussian scale mixture.
+	"""
+
 	def __init__(self, dim, num_scales):
+		"""
+		Initialize parameters and hyperparameters.
+		"""
+
 		self.dim = dim
 		self.num_scales = num_scales
 
@@ -28,6 +42,10 @@ class GSM:
 
 
 	def sample(self, num_samples=1):
+		"""
+		Generate samples from the model.
+		"""
+
 		# draw basic samples
 		val, vec = eig(self.precision)
 		samples = randn(self.dim, num_samples)
@@ -47,11 +65,15 @@ class GSM:
 
 
 
-	def train(self, data, posterior):
+	def train(self, data, posterior=None):
 		"""
+		Update parameters. The result depends on the previous parameters.
 		"""
 
-		posterior = multiply(posterior, exp(self.logposterior(data)))
+		if posterior is None:
+			posterior = exp(self.logposterior(data))
+		else:
+			posterior = multiply(posterior, exp(self.logposterior(data)))
 
 		# helper variable
 		weights = posterior * self.scales.reshape(-1, 1)
@@ -77,14 +99,18 @@ class GSM:
 		tmp.resize([tmp.shape[0], 1])
 
 		# adjust scales
-		self.scales = self.dim * sum(posterior[:, :], 1) / squeeze(dot(posterior[:, :], tmp))
+		self.scales = self.dim * sum(posterior[:, :], 1) / \
+		    squeeze(dot(posterior[:, :], tmp))
 
 
 
 	def gaussianize(self, data):
-		# Gaussian radial CDF and inverse radial CDF
-		rcdf = lambda x: gammainc(self.dim / 2., square(x) / 2.)
-		icdf = lambda y: sqrt(2. * gammaincinv(self.dim / 2., y))
+		"""
+		Apply radial Gaussianization.
+		"""
+
+		# inverse Gaussian radial CDF
+		gicdf = lambda y: sqrt(2. * gammaincinv(self.dim / 2., y))
 
 		# center data
 		data = data - self.mean
@@ -93,26 +119,81 @@ class GSM:
 		val, vec = eig(self.precision)
 		data = dot(dot(vec, dot(diag(sqrt(val)), vec.T)), data)
 
-		norm = sqrt(sum(square(data), 0))
-		data = data / norm
+		# normalize data
+		norm = sqrt(sum(square(data - self.mean), 0))
 
 		# allocate memory
 		result = zeros_like(norm)
 
 		# transform data
 		for j in range(self.num_scales):
-			result += self.priors[j] * rcdf(sqrt(self.scales[j]) * norm)
+			result += self.priors[j] * chi.cdf(sqrt(self.scales[j]) * norm, self.dim)
 
-		return multiply(icdf(result), data)
+		return multiply(gicdf(result) / norm, data)
+
+
+
+	def invgaussianize(self, data, maxiter=100):
+		"""
+		Apply inverse radial Gaussianization.
+		"""
+
+		def rcdf(norm):
+			"""
+			Radial CDF.
+			"""
+			return sum(self.priors * chi.cdf(sqrt(self.scales) * norm, self.dim))
+
+		# compute norm
+		norm = sqrt(sum(square(data), 0))
+
+		# normalize data
+		data = data / norm
+
+		# apply Gaussian radial CDF
+		norm = chi.cdf(norm, self.dim)
+
+		# apply inverse radial CDF
+		norm_max = 1.
+		for t in range(len(norm)):
+			# make sure root lies between zero and norm_max
+			while rcdf(norm_max) < norm[t]:
+				norm_max += 1.
+			# numerically find root
+			norm[t] = bisect(
+			    f=lambda x: rcdf(x) - norm[t],
+			    a=0.,
+			    b=norm_max,
+			    maxiter=maxiter,
+			    disp=False)
+
+		# apply norm
+		data = multiply(norm, data)
+
+		# unwhiten data
+		val, vec = eig(self.precision)
+		data = dot(dot(vec, dot(diag(1. / sqrt(val)), vec.T)), data)
+
+		# shift data
+		data += self.mean
+
+		return data
 
 
 
 	def loglikelihood(self, data):
+		"""
+		Calculate marginal log-likelihood with respect to the given data points.
+		"""
 		return logsumexp(self.logjoint(data), 0)
 
 
 
 	def logposterior(self, data):
+		"""
+		Calculate log-posterior over scales given the data points.
+		"""
+
 		jnt = self.logjoint(data)
 		return jnt - logsumexp(jnt, 0)
 
@@ -120,7 +201,7 @@ class GSM:
 
 	def logjoint(self, data):
 		"""
-		Compute joint distribution over scales and data points.
+		Calculate log-joint density of scales and data points.
 		"""
 
 		tmp = data - self.mean

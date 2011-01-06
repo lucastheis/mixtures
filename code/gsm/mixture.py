@@ -57,7 +57,7 @@ class Mixture:
 			print round(self.avglogloss(data_valid) / log(2) / self[0].dim, 4)
 
 			# adjust priors over components (M)
-			self.priors = mean(exp(logpost), 1) + (alpha - 1.)
+			self.priors = mean(exp(logpost), 1) + (self.alpha - 1.)
 			self.priors /= sum(self.priors)
 
 			# adjust remaining parameters (M)

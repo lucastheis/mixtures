@@ -1,3 +1,7 @@
+"""
+Check if training can recover parameters.
+"""
+
 import sys
 
 sys.path.append('./code')
@@ -13,14 +17,17 @@ from numpy.random import randn, permutation
 def main(argv):
 	mogsm = MoGSM(2, 2, 5)
 
+	# sample from true model
 	samples = mogsm.sample(5000)
 
 	scatter(samples[0, :], samples[1, :], linewidth=0, alpha=0.5)
 	axis('equal')
 
+	# relearn parameters
 	mogsm = MoGSM(2, 2, 5)
 	mogsm.train(samples, samples, 20)
 
+	# sample from recovered model
 	samples = mogsm.sample(5000)
 
 	figure()
