@@ -2,14 +2,21 @@
 An implementation of the finite Gaussian scale mixture.
 """
 
+__license__ = 'MIT License <http://www.opensource.org/licenses/mit-license.php>'
+__author__ = 'Lucas Theis <lucas@tuebingen.mpg.de>'
+__docformat__ = 'epytext'
+
 from numpy import ones, zeros, zeros_like, dot, multiply, sum, mean, cov
-from numpy import square, sqrt, exp, log, pi, squeeze, diag
+from numpy import square, sqrt, exp, log, pi, squeeze, diag, power
 from numpy.random import rand, randn
-from numpy.linalg import inv, det, eig
-from scipy.special import gammaincinv
+from numpy.linalg import inv, det, eig, slogdet
+from scipy.special import gammaincinv, gamma
 from scipy.optimize import bisect
 from scipy.stats import chi
 from utils import logsumexp
+
+from numpy import arange, min, max
+from matplotlib.pyplot import plot
 
 class GSM:
 	"""
@@ -19,6 +26,12 @@ class GSM:
 	def __init__(self, dim, num_scales):
 		"""
 		Initialize parameters and hyperparameters.
+
+		@type  dim: integer
+		@param dim: dimensionality of the distribution
+
+		@type  num_scales: integer
+		@param num_scales: number of mixture components
 		"""
 
 		self.dim = dim
@@ -32,6 +45,7 @@ class GSM:
 
 		# initial precision matrix
 		self.precision = inv(cov(randn(dim, dim * dim)))
+		self.precision /= pow(det(self.precision), 1. / self.dim)
 
 		# initial mean
 		self.mean = zeros([dim, 1])
@@ -109,8 +123,18 @@ class GSM:
 		Apply radial Gaussianization.
 		"""
 
-		# inverse Gaussian radial CDF
-		gicdf = lambda y: sqrt(2. * gammaincinv(self.dim / 2., y))
+		def rcdf(norm):
+			"""
+			Radial CDF.
+			"""
+
+			# allocate memory
+			result = zeros_like(norm)
+
+			for j in range(self.num_scales):
+				result += self.priors[j] * grcdf(sqrt(self.scales[j]) * norm, self.dim)
+
+			return result
 
 		# center data
 		data = data - self.mean
@@ -119,17 +143,11 @@ class GSM:
 		val, vec = eig(self.precision)
 		data = dot(dot(vec, dot(diag(sqrt(val)), vec.T)), data)
 
-		# normalize data
+		# compute norm
 		norm = sqrt(sum(square(data - self.mean), 0))
 
-		# allocate memory
-		result = zeros_like(norm)
-
-		# transform data
-		for j in range(self.num_scales):
-			result += self.priors[j] * chi.cdf(sqrt(self.scales[j]) * norm, self.dim)
-
-		return multiply(gicdf(result) / norm, data)
+		# radial Gaussianization transform
+		return multiply(igrcdf(rcdf(norm), self.dim) / norm, data)
 
 
 
@@ -141,8 +159,11 @@ class GSM:
 		def rcdf(norm):
 			"""
 			Radial CDF.
+
+			@type  norm: float
+			@param norm: one-dimensional, positive input
 			"""
-			return sum(self.priors * chi.cdf(sqrt(self.scales) * norm, self.dim))
+			return sum(self.priors * grcdf(sqrt(self.scales) * norm, self.dim))
 
 		# compute norm
 		norm = sqrt(sum(square(data), 0))
@@ -151,7 +172,7 @@ class GSM:
 		data = data / norm
 
 		# apply Gaussian radial CDF
-		norm = chi.cdf(norm, self.dim)
+		norm = grcdf(norm, self.dim)
 
 		# apply inverse radial CDF
 		norm_max = 1.
@@ -167,7 +188,7 @@ class GSM:
 			    maxiter=maxiter,
 			    disp=False)
 
-		# apply norm
+		# inverse radial Gaussianization
 		data = multiply(norm, data)
 
 		# unwhiten data
@@ -181,10 +202,74 @@ class GSM:
 
 
 
+	def logjacobian(self, data):
+		"""
+		Returns the logarithm of the Jacobian determinant for the
+		Gaussianization transform.
+		"""
+
+		def rcdf(norm):
+			"""
+			Radial CDF.
+			"""
+
+			# allocate memory
+			result = zeros_like(norm)
+
+			for j in range(self.num_scales):
+				result += self.priors[j] * grcdf(sqrt(self.scales[j]) * norm, self.dim)
+
+			return result
+
+
+		def logdrcdf(norm):
+			"""
+			Logarithm of the derivative of the radial CDF.
+			"""
+
+			# allocate memory
+			result = zeros([self.num_scales, len(norm)])
+
+			tmp = sqrt(self.scales)
+
+			for j in range(self.num_scales):
+				result[j, :] = log(self.priors[j]) + logdgrcdf(tmp[j] * norm, self.dim) + log(tmp[j])
+
+			return logsumexp(result, 0)
+
+		# center data
+		data = data - self.mean
+
+		# whitening transform
+		val, vec = eig(self.precision)
+		whiten = dot(vec, dot(diag(sqrt(val)), vec.T))
+
+		# whiten data
+		data = dot(whiten, data)
+
+		# log of Jacobian determinant of whitening transform
+		_, logtmp3 = slogdet(self.precision)
+		logtmp3 /= 2.
+
+		# data norm
+		norm = sqrt(sum(square(data), 0))
+
+		# radial gaussianization function applied to the norm
+		tmp1 = igrcdf(rcdf(norm), self.dim)
+
+		# log of derivative of radial gaussianization function
+		logtmp2 = logdrcdf(norm) - logdgrcdf(tmp1, self.dim)
+
+		# return log of Jacobian determinant
+		return (self.dim - 1) * log(tmp1 / norm) + logtmp2 + logtmp3
+
+
+
 	def loglikelihood(self, data):
 		"""
 		Calculate marginal log-likelihood with respect to the given data points.
 		"""
+
 		return logsumexp(self.logjoint(data), 0)
 
 
@@ -216,3 +301,50 @@ class GSM:
 			    + log(self.priors[j])
 
 		return logjnt
+
+
+
+def grcdf(norm, dim):
+	"""
+	Gaussian radial CDF.
+	"""
+
+	return chi.cdf(norm, dim)
+
+
+
+def igrcdf(norm, dim):
+	"""
+	Inverse Gaussian radial CDF.
+	"""
+
+	return sqrt(2.) * sqrt(gammaincinv(dim / 2., norm))
+
+
+
+def logigrcdf(norm, dim):
+	"""
+	Logarithm of the inverse Gaussian radial CDF.
+	"""
+
+	return (log(gammaincinv(dim / 2., norm)) + log(2)) / 2.
+
+
+
+def dgrcdf(norm, dim):
+	"""
+	Derivative of the Gaussian radial CDF.
+	"""
+
+	tmp = square(norm) / 2.
+	return power(tmp, dim / 2. - 1.) / exp(tmp) / gamma(dim / 2) * norm
+
+
+
+def logdgrcdf(norm, dim):
+	"""
+	Logarithm of the derivative of the Gaussian radial CDF.
+	"""
+
+	tmp = square(norm) / 2.
+	return (dim / 2. - 1.) * log(tmp) - tmp - log(gamma(dim / 2)) + log(norm)

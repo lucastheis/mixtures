@@ -8,9 +8,10 @@ sys.path.append('./code')
 
 from gsm import GSM
 from matplotlib.pyplot import scatter, axis, figure, draw
+from time import time
 
 def main():
-	gsm = GSM(2, 8)
+	gsm = GSM(2, 2)
 
 	gsm.scales[0] = 10.
 	gsm.scales[1] = 0.1

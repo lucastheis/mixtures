@@ -21,9 +21,7 @@ def main(argv):
 	data = preprocess(data)
 
 	mogsm = MoGSM(256, 8, 6)
-	mogsm.train(data, data, 100)
-
-	dump(mogsm, open('mogsm.pck', 'w'))
+	mogsm.train(data, data, 10)
 
 	return 0
 
