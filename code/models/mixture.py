@@ -5,6 +5,8 @@ from numpy.linalg import det, inv, eig
 from gsm import GSM
 from utils import logsumexp
 
+from transform import Transform
+
 class Mixture:
 	def __init__(self):
 		self.components = []
@@ -43,7 +45,7 @@ class Mixture:
 
 
 
-	def train(self, data, data_valid, num_epochs=100):
+	def train(self, data, weights=None, num_epochs=1):
 		# allocate memory
 		logpost = zeros([len(self), data.shape[1]])
 
@@ -53,8 +55,9 @@ class Mixture:
 				logpost[i, :] = self[i].loglikelihood(data) + log(self.priors[i])
 			logpost -= logsumexp(logpost, 0)
 
-			print round(self.avglogloss(data) / log(2) / self[0].dim, 4),
-			print round(self.avglogloss(data_valid) / log(2) / self[0].dim, 4)
+			# incorporate conditional prior
+			if weights is not None:
+				logpost += log(weights)
 
 			# adjust priors over components (M)
 			self.priors = mean(exp(logpost), 1) + (self.alpha - 1.)
@@ -62,7 +65,7 @@ class Mixture:
 
 			# adjust remaining parameters (M)
 			for i in range(len(self)):
-				self[i].train(data, exp(logpost[i, :]))
+				self[i].train(data, weights=exp(logpost[i, :]))
 
 
 

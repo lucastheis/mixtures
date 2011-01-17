@@ -1,33 +1,38 @@
-import numpy as np
+from numpy import log, sum, exp, zeros, max, asarray, vectorize, inf, nan
+from scipy.special import gammainc
+from scipy.optimize import bisect
 
 __license__ = 'MIT License <http://www.opensource.org/licenses/mit-license.php>'
 __author__ = 'Lucas Theis <lucas@tuebingen.mpg.de>'
 __docformat__ = 'epytext'
 
-def binary_numbers(n):
+def gammaincinv(a, y, maxiter=100):
 	"""
-	Generates an n x 2^n matrix whose columns are filled with binary-encoded
-	numbers.
-
-	@type  n: integer
-	@param n: number of bits
-
-	@rtype:  matrix
-	@return: matrix filled with binary numbers
+	A slower but more stable implementation of the inverse regularized
+	incomplete Gamma function.
 	"""
 
-	def recursive(B, i=0):
-		m = B.shape[1] / 2
+	y_min = 0.
 
-		B[i, m:] = 1
+	if y > 1:
+		return nan
 
-		if m > 1:
-			recursive(B[:, :m], i + 1)
-			recursive(B[:, m:], i + 1)
+	# make sure range includes root
+	while gammainc(a, gammaincinv.y_max) < y:
+		y_min = gammaincinv.y_max
+		gammaincinv.y_max += 1.
 
-	B = np.matrix(np.zeros([n, pow(2, n)], 'byte'))
-	recursive(B)
-	return B
+	# find inverse with bisection method
+	return bisect(
+	    f=lambda x: gammainc(a, x) - y,
+	    a=y_min,
+	    b=gammaincinv.y_max,
+	    maxiter=maxiter,
+	    xtol=1e-16,
+	    disp=True)
+
+gammaincinv = vectorize(gammaincinv)
+gammaincinv.y_max = 1
 
 
 
@@ -50,15 +55,15 @@ def logsumexp(x, ax=None):
 		output_shape = list(x.shape)
 		output_shape[ax] = 1
 
-		x_max = np.zeros(output_shape)
-		np.max(x, ax, out=x_max)
+		x_max = zeros(output_shape)
+		max(x, ax, out=x_max)
 
-		res = np.zeros(output_shape)
-		np.sum(np.exp(x - x_max), ax, out=res)
-		return x_max + np.log(res)
+		res = zeros(output_shape)
+		sum(exp(x - x_max), ax, out=res)
+		return x_max + log(res)
 	else:
 		x_max = x.max()
-		return x_max + np.log(np.exp(x - x_max).sum(ax))
+		return x_max + log(exp(x - x_max).sum(ax))
 
 
 
@@ -77,11 +82,11 @@ def logmeanexp(x, ax=None):
 	@return: a matrix containing the results
 	"""
 
-	x = np.asarray(x)
+	x = asarray(x)
 
 	if ax is None:
 		n = x.size
 	else:
 		n = x.shape[ax]
 
-	return logsumexp(x, ax) - np.log(n)
+	return logsumexp(x, ax) - log(n)
