@@ -6,6 +6,7 @@ from models import MoGSM
 from numpy import load, log, exp
 
 def main(argv):
+	# load preprocessed data samples
 	data = load('./data/vanhateren.npz')
 
 	mixture = MoGSM(15, 5, 12)
