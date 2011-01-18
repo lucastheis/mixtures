@@ -64,17 +64,19 @@ class GSM(Distribution):
 			cum += self.priors[j - 1]
 			ind[uni > cum] = j
 
-		# scale samples
+		# scale and shift samples
 		return multiply(samples, 1. / sqrt(self.scales[ind])) + self.mean
 
 
 
 
 	def train(self, data, weights=None):
-		if weights is None:
-			posterior = exp(self.logposterior(data))
-		else:
-			posterior = multiply(weights, exp(self.logposterior(data)))
+		# compute posterior over scales
+		posterior = exp(self.logposterior(data))
+
+		# incorporate conditional model prior
+		if weights is not None:
+			posterior *= weights
 
 		# helper variable
 		tmp1 = multiply(posterior, self.scales.reshape(-1, 1))

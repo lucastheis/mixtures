@@ -3,6 +3,13 @@ from numpy.random import permutation
 from numpy.linalg import eig
 
 def preprocess(data):
+	"""
+	Log-transforms, centers and symmetrically whitens data.
+
+	@type  data: array_like
+	@param data: data points stored in columns
+	"""
+
 	# log-transform
 	data = log(data + 1.)
 

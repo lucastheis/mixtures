@@ -46,28 +46,17 @@ class Mixture:
 
 
 	def train(self, data, weights=None, num_epochs=1):
-		# allocate memory
-		logpost = zeros([len(self), data.shape[1]])
-
 		for epoch in range(num_epochs):
-			# compute posterior over components and scales (E)
-			for i in range(len(self)):
-				logpost[i, :] = self[i].loglikelihood(data) + log(self.priors[i])
-			logpost -= logsumexp(logpost, 0)
-
-			print epoch, self.avglogloss(data) / log(2) / 15
-
-			# incorporate conditional prior
-			if weights is not None:
-				logpost += log(weights)
+			# compute posterior over components (E)
+			post = exp(self.logposterior(data))
 
 			# adjust priors over components (M)
-			self.priors = mean(exp(logpost), 1) + (self.alpha - 1.)
+			self.priors = mean(post, 1) + (self.alpha - 1.)
 			self.priors /= sum(self.priors)
 
 			# adjust remaining parameters (M)
 			for i in range(len(self)):
-				self[i].train(data, weights=exp(logpost[i, :]))
+				self[i].train(data, weights=post[i, :])
 
 
 
@@ -84,5 +73,34 @@ class Mixture:
 
 
 
-	def avglogloss(self, data):
-		return -mean(self.loglikelihood(data))
+	def evaluate(self, data):
+		"""
+		Return average negative log-likelihood in nats.
+
+		@type  data: array_like
+		@param data: data stored in columns
+		"""
+
+		return -mean(self.loglikelihood(data)) / data.shape[0]
+
+
+
+	def logposterior(self, data):
+		"""
+		Computes the log-posterior distribution over components.
+
+		@type  data: array_like
+		@param data: data points stored in columns
+		"""
+
+		# allocate memory
+		logpost = zeros([len(self), data.shape[1]])
+
+		# compute log-joint
+		for i in range(len(self)):
+			logpost[i, :] = self[i].loglikelihood(data) + log(self.priors[i])
+
+		# normalize to get log-posterior
+		logpost -= logsumexp(logpost, 0)
+
+		return logpost
