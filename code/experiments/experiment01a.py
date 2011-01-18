@@ -11,10 +11,8 @@ def main(argv):
 	mixture = MoGSM(15, 5, 12)
 	mixture.train(data['train'][1:, :], num_epochs=100)
 
-	print mixture.avglogloss(data['train'][1:, :]) / 15. / log(2)
-	print mixture.avglogloss(data['test'][1:, :]) / 15. / log(2)
-
-	posterior = exp(mixture.logposterior(data['test'][1:, :]))
+	print mixture.evaluate(data['train'][1:, :]) / log(2),
+	print mixture.evaluate(data['test'][1:, :]) / log(2)
 
 	return 0
 

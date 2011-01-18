@@ -12,7 +12,7 @@ def main(argv):
 	data = preprocess(data)
 
 	# train a mixture of Gaussian scale mixtures
-	mixture = MoGSM(15, 5, 12)
+	mixture = MoGSM(data.shape[0], 5, 12)
 	mixture.train(data, num_epochs=100)
 
 	# evaluate model

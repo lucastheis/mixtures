@@ -1,13 +1,26 @@
+"""
+A generic mixture class with an implementation of EM.
+"""
+
 from numpy import multiply, dot, sum, mean, cov, sqrt, log, exp, pi, argsort
 from numpy import ones, zeros, zeros_like, eye, round, squeeze, concatenate
 from numpy.random import multinomial
 from numpy.linalg import det, inv, eig
 from gsm import GSM
 from utils import logsumexp
+from distribution import Distribution
 
-from transform import Transform
+__license__ = 'MIT License <http://www.opensource.org/licenses/mit-license.php>'
+__author__ = 'Lucas Theis <lucas@tuebingen.mpg.de>'
+__docformat__ = 'epytext'
 
-class Mixture:
+class Mixture(Distribution):
+	"""
+	A generic mixture class with an implementation of EM.
+
+	References:
+
+	"""
 	def __init__(self):
 		self.components = []
 		self.priors = None
@@ -18,17 +31,36 @@ class Mixture:
 
 
 	def add_component(self, component):
+		"""
+		Add a component to the mixture distribution. This resets the parameters
+		of the prior over the components.
+
+		@type  component: Distribution
+		@param component: a probabilistic model
+		"""
+
 		self.components.append(component)
 		self.priors = ones(len(self)) / len(self)
 
 
 
 	def __getitem__(self, key):
+		"""
+		Can be used to access components.
+
+		@type  key: integer
+		@param key: index of component
+		"""
+
 		return self.components[key]
 
 
 
 	def __len__(self):
+		"""
+		Returns the number of components in the model.
+		"""
+
 		return len(self.components)
 
 
@@ -49,6 +81,12 @@ class Mixture:
 		for epoch in range(num_epochs):
 			# compute posterior over components (E)
 			post = exp(self.logposterior(data))
+
+			print epoch, self.evaluate(data) / log(2)
+
+			# incorporate conditional prior
+			if weights is not None:
+				post *= weights
 
 			# adjust priors over components (M)
 			self.priors = mean(post, 1) + (self.alpha - 1.)
