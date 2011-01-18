@@ -51,10 +51,6 @@ class GSM(Distribution):
 
 
 	def sample(self, num_samples=1):
-		"""
-		Generate samples from the model.
-		"""
-
 		# draw basic samples
 		val, vec = eig(self.precision)
 		samples = randn(self.dim, num_samples)
@@ -75,13 +71,6 @@ class GSM(Distribution):
 
 
 	def train(self, data, weights=None):
-		"""
-		@type  data: ndarray
-		@param data: data used to train the model
-
-		@param weights: 
-		"""
-
 		if weights is None:
 			posterior = exp(self.logposterior(data))
 		else:
@@ -119,10 +108,6 @@ class GSM(Distribution):
 
 
 	def loglikelihood(self, data):
-		"""
-		Calculate marginal log-likelihood with respect to the given data points.
-		"""
-
 		return logsumexp(self.logjoint(data), 0)
 
 
@@ -130,6 +115,9 @@ class GSM(Distribution):
 	def logposterior(self, data):
 		"""
 		Calculate log-posterior over scales given the data points.
+
+		@type  data: array_like
+		@param data: data stored in columns
 		"""
 
 		jnt = self.logjoint(data)

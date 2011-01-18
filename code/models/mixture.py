@@ -55,6 +55,8 @@ class Mixture:
 				logpost[i, :] = self[i].loglikelihood(data) + log(self.priors[i])
 			logpost -= logsumexp(logpost, 0)
 
+			print epoch, self.avglogloss(data) / log(2) / 15
+
 			# incorporate conditional prior
 			if weights is not None:
 				logpost += log(weights)
