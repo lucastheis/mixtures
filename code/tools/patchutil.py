@@ -113,7 +113,10 @@ def show(samples, num_rows=None, num_cols=None, num_patches=None, line_width=1, 
 		patchwork[r_off:r_off + patch_size[0], c_off:c_off + patch_size[1], ...] = samples[i]
 
 	# display patches
-	h = mplt.imshow(patchwork, cmap='gray', interpolation='nearest', aspect='equal')
+	h = mplt.imshow(patchwork,
+	    cmap='gray',
+	    interpolation='nearest',
+	    aspect='equal')
 
 	xmargin = float(margin) / (patchwork.shape[1] + 2 * margin + 1)
 	ymargin = float(margin) / (patchwork.shape[0] + 2 * margin + 1)

@@ -74,6 +74,8 @@ class GSM(Distribution):
 		# compute posterior over scales
 		posterior = exp(self.logposterior(data))
 
+		print '001'
+
 		# incorporate conditional model prior
 		if weights is not None:
 			posterior *= weights

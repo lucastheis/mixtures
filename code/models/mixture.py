@@ -8,7 +8,7 @@ __docformat__ = 'epytext'
 
 from numpy import multiply, dot, sum, mean, cov, sqrt, log, exp, pi, argsort
 from numpy import ones, zeros, zeros_like, eye, round, squeeze, concatenate
-from numpy.random import multinomial, rand
+from numpy.random import multinomial, rand, permutation
 from numpy.linalg import det, inv, eig
 from gsm import GSM
 from utils import logsumexp
@@ -73,7 +73,10 @@ class Mixture(Distribution):
 		for i in range(len(self)):
 			samples.append(self[i].sample(num_samples[i]))
 
-		return concatenate(samples, 1)
+		samples = concatenate(samples, 1)
+		samples = samples[:, permutation(samples.shape[1])]
+
+		return samples
 
 
 
@@ -130,18 +133,6 @@ class Mixture(Distribution):
 		logpost -= logsumexp(logpost, 0)
 
 		return logpost
-
-
-
-	def evaluate(self, data):
-		"""
-		Return average negative log-likelihood in nats.
-
-		@type  data: array_like
-		@param data: data stored in columns
-		"""
-
-		return -mean(self.loglikelihood(data)) / data.shape[0]
 
 
 

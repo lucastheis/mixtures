@@ -6,6 +6,8 @@ __license__ = 'MIT License <http://www.opensource.org/licenses/mit-license.php>'
 __author__ = 'Lucas Theis <lucas@tuebingen.mpg.de>'
 __docformat__ = 'epytext'
 
+from numpy import mean
+
 class Distribution:
 	"""
 	Provides an interface for probabilistic models.
@@ -55,3 +57,15 @@ class Distribution:
 		
 		raise Exception('Abstract method \'loglikelihood\' not implemented in '
 		    + str(self.__class__))
+
+
+
+	def evaluate(self, data):
+		"""
+		Return average negative log-likelihood in nats.
+
+		@type  data: array_like
+		@param data: data stored in columns
+		"""
+
+		return -mean(self.loglikelihood(data)) / data.shape[0]

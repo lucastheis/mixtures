@@ -4,17 +4,17 @@ sys.path.append('./code')
 
 from models import MoGSM, RadialGaussianization
 from numpy import load, log, exp, concatenate
-from tools import contours, Experiment
+from tools import Experiment, contours, preprocess
 
 def main(argv):
 	experiment = Experiment()
 
 	# load preprocessed data samples
-	data = load('./data/vanhateren.npz')
-	data = concatenate([data['train'][1:, :], data['test'][1:, :]], 1)
+	data = load('./data/vanhateren4x4.npz')['data']
+	data = preprocess(data)
 
 	# train mixture of Gaussian scale mixtures
-	mixture = MoGSM(15, 5, 12)
+	mixture = MoGSM(data.shape[0], 5, 12)
 	mixture.train(data[:, :50000], num_epochs=100)
 
 	# split data
@@ -22,7 +22,7 @@ def main(argv):
 
 	# Gaussianize data
 	for k in range(len(mixture)):
-		batches[k] = RadialGaussianization(mixture[k])(batches[k])
+		batches[k] = RadialGaussianization(mixture[k], symmetric=False)(batches[k])
 
 	# store results
 	experiment.results['mixture'] = mixture
