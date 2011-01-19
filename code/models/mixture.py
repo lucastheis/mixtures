@@ -2,6 +2,10 @@
 A generic mixture class with an implementation of EM.
 """
 
+__license__ = 'MIT License <http://www.opensource.org/licenses/mit-license.php>'
+__author__ = 'Lucas Theis <lucas@tuebingen.mpg.de>'
+__docformat__ = 'epytext'
+
 from numpy import multiply, dot, sum, mean, cov, sqrt, log, exp, pi, argsort
 from numpy import ones, zeros, zeros_like, eye, round, squeeze, concatenate
 from numpy.random import multinomial, rand
@@ -9,10 +13,6 @@ from numpy.linalg import det, inv, eig
 from gsm import GSM
 from utils import logsumexp
 from distribution import Distribution
-
-__license__ = 'MIT License <http://www.opensource.org/licenses/mit-license.php>'
-__author__ = 'Lucas Theis <lucas@tuebingen.mpg.de>'
-__docformat__ = 'epytext'
 
 class Mixture(Distribution):
 	"""

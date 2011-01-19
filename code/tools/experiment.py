@@ -4,6 +4,11 @@
 Manage and display experimental results.
 """
 
+__license__ = 'MIT License <http://www.opensource.org/licenses/mit-license.php>'
+__author__ = 'Lucas Theis <lucas@tuebingen.mpg.de>'
+__docformat__ = 'epytext'
+__version__ = '0.1.1'
+
 import sys
 import os
 import numpy
@@ -18,11 +23,6 @@ from warnings import warn
 from time import time, strftime, localtime
 from numpy import random
 from numpy.random import rand
-
-__license__ = 'MIT License <http://www.opensource.org/licenses/mit-license.php>'
-__author__ = 'Lucas Theis <lucas@tuebingen.mpg.de>'
-__docformat__ = 'epytext'
-__version__ = '0.1.1'
 
 class Experiment:
 	"""
