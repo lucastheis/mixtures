@@ -4,7 +4,7 @@ A generic mixture class with an implementation of EM.
 
 from numpy import multiply, dot, sum, mean, cov, sqrt, log, exp, pi, argsort
 from numpy import ones, zeros, zeros_like, eye, round, squeeze, concatenate
-from numpy.random import multinomial
+from numpy.random import multinomial, rand
 from numpy.linalg import det, inv, eig
 from gsm import GSM
 from utils import logsumexp
@@ -111,18 +111,6 @@ class Mixture(Distribution):
 
 
 
-	def evaluate(self, data):
-		"""
-		Return average negative log-likelihood in nats.
-
-		@type  data: array_like
-		@param data: data stored in columns
-		"""
-
-		return -mean(self.loglikelihood(data)) / data.shape[0]
-
-
-
 	def logposterior(self, data):
 		"""
 		Computes the log-posterior distribution over components.
@@ -142,3 +130,46 @@ class Mixture(Distribution):
 		logpost -= logsumexp(logpost, 0)
 
 		return logpost
+
+
+
+	def evaluate(self, data):
+		"""
+		Return average negative log-likelihood in nats.
+
+		@type  data: array_like
+		@param data: data stored in columns
+		"""
+
+		return -mean(self.loglikelihood(data)) / data.shape[0]
+
+
+
+	def split(self, data):
+		"""
+		Randomly assigns data points to mixture components. The probability of a
+		data point being assigned to a component is the posterior probability of
+		the component given the data point.
+
+		@type  data: array_like
+		@param data: data stored in columns
+		"""
+
+		# compute posterior over components
+		post = exp(self.logposterior(data))
+
+		# sample indices from posterior
+		uni = rand(data.shape[1])
+		ind = zeros(uni.shape, 'int')
+		cum = zeros(uni.shape)
+
+		for k in range(1, len(self)):
+			cum += post[k - 1, :]
+			ind[uni > cum] = k
+
+		# split data
+		batches = []
+		for k in range(len(self)):
+			batches.append(data[:, ind == k])
+
+		return batches
