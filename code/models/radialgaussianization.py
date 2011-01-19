@@ -16,17 +16,21 @@ from scipy.special import gamma
 from utils import logsumexp, gammaincinv
 
 class RadialGaussianization(Transform):
-	def __init__(self, model, gsm):
+	def __init__(self, gsm, model=None, symmetric=True):
 		"""
 		@type  model: Distribution
 		@param model: the model applied to the transformed data
 
 		@type  gsm: GSM
 		@param gsm: the model used for the Gaussianization
+
+		@type  symmetric: boolean
+		@param symmetric: whether to perform symmetric or PCA whitening
 		"""
 
 		self.model = model
 		self.gsm = gsm
+		self.symmetric = symmetric
 
 
 
@@ -54,7 +58,12 @@ class RadialGaussianization(Transform):
 
 		# whiten data
 		val, vec = eig(self.gsm.precision)
-		data = dot(dot(vec, dot(diag(sqrt(val)), vec.T)), data)
+		whiten = dot(diag(sqrt(val)), vec.T)
+
+		if self.symmetric:
+			whiten = dot(vec, whiten)
+
+		data = dot(whiten, data)
 
 		# compute norm
 		norm = sqrt(sum(square(data), 0))
@@ -101,12 +110,18 @@ class RadialGaussianization(Transform):
 
 		# unwhiten data
 		val, vec = eig(self.gsm.precision)
-		data = dot(dot(vec, dot(diag(1. / sqrt(val)), vec.T)), data)
+		unwhiten = dot(vec, diag(1. / sqrt(val)))
+
+		if self.symmetric:
+			unwhiten = dot(unwhiten, vec.T)
+
+		data = dot(unwhiten, data)
 
 		# shift data
 		data += self.gsm.mean
 
 		return data
+
 
 
 	def logjacobian(self, data):
