@@ -1,10 +1,14 @@
-from numpy import log, sum, exp, zeros, max, asarray, vectorize, inf, nan
-from scipy.special import gammainc
-from scipy.optimize import bisect
+"""
+A collection of utility functions.
+"""
 
 __license__ = 'MIT License <http://www.opensource.org/licenses/mit-license.php>'
 __author__ = 'Lucas Theis <lucas@tuebingen.mpg.de>'
 __docformat__ = 'epytext'
+
+from numpy import log, sum, exp, zeros, max, asarray, vectorize, inf, nan
+from scipy.special import gammainc
+from scipy.optimize import bisect
 
 def gammaincinv(a, y, maxiter=100):
 	"""
