@@ -111,18 +111,6 @@ class Mixture(Distribution):
 
 
 
-	def evaluate(self, data):
-		"""
-		Return average negative log-likelihood in nats.
-
-		@type  data: array_like
-		@param data: data stored in columns
-		"""
-
-		return -mean(self.loglikelihood(data)) / data.shape[0]
-
-
-
 	def logposterior(self, data):
 		"""
 		Computes the log-posterior distribution over components.

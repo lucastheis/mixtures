@@ -2,7 +2,7 @@ import sys
 
 sys.path.append('./code')
 
-from models import MoGSM
+from models import MoGSM, MoGaussian
 from numpy import load, log
 from tools import preprocess, Experiment
 
@@ -14,7 +14,7 @@ def main(argv):
 	data = preprocess(data)
 
 	# train a mixture of Gaussian scale mixtures
-	mixture = MoGSM(data.shape[0], 5, 12)
+	mixture = MoGSM(data.shape[0], 8, 12)
 	mixture.train(data, num_epochs=100)
 
 	# evaluate model
