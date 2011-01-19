@@ -5,12 +5,15 @@ Provides an interface which should be implemented by all probabilistic models.
 __license__ = 'MIT License <http://www.opensource.org/licenses/mit-license.php>'
 __author__ = 'Lucas Theis <lucas@tuebingen.mpg.de>'
 __docformat__ = 'epytext'
+__version__ = '1.0.0'
+
+from numpy import mean
 
 from numpy import mean
 
 class Distribution:
 	"""
-	Provides an interface for probabilistic models.
+	Provides an interface and common functionality for probabilistic models.
 	"""
 
 	def __init__(self):
@@ -62,7 +65,7 @@ class Distribution:
 
 	def evaluate(self, data):
 		"""
-		Return average negative log-likelihood in nats.
+		Return average negative log-likelihood per dimension in nats.
 
 		@type  data: array_like
 		@param data: data stored in columns

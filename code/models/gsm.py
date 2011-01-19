@@ -13,6 +13,8 @@ from numpy.linalg import inv, det, eig
 from distribution import Distribution
 from utils import logsumexp
 
+from numpy import sort
+
 class GSM(Distribution):
 	"""
 	Finite Gaussian scale mixture.
@@ -74,36 +76,59 @@ class GSM(Distribution):
 		# compute posterior over scales
 		posterior = exp(self.logposterior(data))
 
-		print '001'
+		print '004'
 
 		# incorporate conditional model prior
 		if weights is not None:
 			posterior *= weights
 
+		print '005'
+
 		# helper variable
 		tmp1 = multiply(posterior, self.scales.reshape(-1, 1))
 
+		print '006'
+
 		# adjust prior over scales
 		self.priors = mean((posterior + 0.001) / sum(posterior + 0.001, 0), 1)
+
+		print '007'
 
 		# adjust mean
 		self.mean = sum(dot(data, tmp1.T), 1) / sum(tmp1)
 		self.mean.resize([self.dim, 1])
 
+		print '008'
+
 		# center data
 		data = data - self.mean
 
+		print '009'
+
 		# adjust precision matrix
-		self.precision = zeros_like(self.precision)
+		covariance = zeros_like(self.precision)
 		for j in range(self.num_scales):
-			self.precision += cov(multiply(data, sqrt(tmp1[j, :])))
-		self.precision = inv(self.precision)
+			covariance += cov(multiply(data, sqrt(tmp1[j, :])))
+
+		print '010'
+
+		val, vec = eig(covariance)
+		val = exp(mean(log(val)) - log(val))
+
+		self.precision = dot(vec, dot(diag(val), vec.T))
+
+#		self.precision = inv(self.precision)
+
 
 		# normalize by determinant
-		self.precision /= pow(det(self.precision), 1. / self.dim)
+#		self.precision /= pow(det(self.precision), 1. / self.dim)
+
+		print '011'
 
 		data = sum(multiply(data, dot(self.precision, data)), 0)
 		data.resize([data.shape[0], 1])
+
+		print '012'
 
 		# adjust scales
 		self.scales = self.dim * sum(posterior[:, :], 1) / \
@@ -146,4 +171,3 @@ class GSM(Distribution):
 			    + log(self.priors[j])
 
 		return logjnt
-
