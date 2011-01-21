@@ -5,7 +5,6 @@ Simplifies modeling of transformed data.
 __license__ = 'MIT License <http://www.opensource.org/licenses/mit-license.php>'
 __author__ = 'Lucas Theis <lucas@tuebingen.mpg.de>'
 __docformat__ = 'epytext'
-__version__ = '1.0.0'
 
 from distribution import Distribution
 

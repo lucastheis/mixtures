@@ -5,9 +5,6 @@ Provides an interface which should be implemented by all probabilistic models.
 __license__ = 'MIT License <http://www.opensource.org/licenses/mit-license.php>'
 __author__ = 'Lucas Theis <lucas@tuebingen.mpg.de>'
 __docformat__ = 'epytext'
-__version__ = '1.0.0'
-
-from numpy import mean
 
 from numpy import mean
 
@@ -41,7 +38,7 @@ class Distribution:
 		@type  data: array_like
 		@param data: data stored in columns
 
-		@type  weights: ndarray
+		@type  weights: array_like
 		@param weights: an optional weight for every data point
 		"""
 

@@ -1,3 +1,12 @@
+"""
+Tool for creating contour plots from samples.
+"""
+
+__license__ = 'MIT License <http://www.opensource.org/licenses/mit-license.php>'
+__author__ = 'Lucas Theis <lucas@tuebingen.mpg.de>'
+__docformat__ = 'epytext'
+__version__ = '1.0.0'
+
 from numpy import histogram2d, cov, sqrt, sum, multiply, dot
 from numpy.linalg import inv
 from matplotlib.pyplot import clf, contour, axis, draw

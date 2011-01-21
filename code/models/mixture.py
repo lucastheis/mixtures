@@ -45,7 +45,7 @@ class Mixture(Distribution):
 		Add a component to the mixture distribution. This resets the parameters
 		of the prior over the components.
 
-		@type  component: Distribution
+		@type  component: L{Distribution}
 		@param component: a probabilistic model
 		"""
 
@@ -92,8 +92,6 @@ class Mixture(Distribution):
 
 	def train(self, data, weights=None, num_epochs=1):
 		for epoch in range(num_epochs):
-			#print '001'
-
 			# compute posterior over components (E)
 			post = exp(self.logposterior(data))
 
@@ -154,12 +152,16 @@ class Mixture(Distribution):
 
 	def split(self, data):
 		"""
-		Randomly assigns data points to mixture components. The probability of a
-		data point being assigned to a component is the posterior probability of
-		the component given the data point.
+		Randomly assigns data points to mixture components.
+		
+		The probability of a data point being assigned to a component is the
+		posterior probability of the component given the data point.
 
 		@type  data: array_like
 		@param data: data stored in columns
+
+		@rtype: C{list}
+		@return: list of arrays containing the data
 		"""
 
 		# compute posterior over components
