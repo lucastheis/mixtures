@@ -18,8 +18,18 @@ class Mixture(Distribution):
 	"""
 	A generic mixture class with an implementation of EM.
 
-	References:
+	B{References:}
+		- M. Bishop (2006). I{Pattern Recognition and Machine Learning.}
+		Springer Verlag.
 
+	@type components: list
+	@ivar components: mixture components
+
+	@type priors: array_like
+	@ivar priors: prior component weights
+
+	@type alpha: positive real
+	@ivar alpha: parameter of Dirichlet prior over component weights
 	"""
 	def __init__(self):
 		self.components = []
@@ -93,13 +103,13 @@ class Mixture(Distribution):
 			if weights is not None:
 				post *= weights
 
-			#print '002'
-
 			# adjust priors over components (M)
-			self.priors = mean(post, 1) + (self.alpha - 1.)
-			self.priors /= sum(self.priors)
+			self.priors = mean(post, 1)
 
-			#print '003'
+			if self.alpha is not None:
+				# regularization with Dirichlet prior
+				self.priors += self.alpha - 1.
+			self.priors /= sum(self.priors)
 
 			# adjust remaining parameters (M)
 			for i in range(len(self)):

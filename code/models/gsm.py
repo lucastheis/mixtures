@@ -7,17 +7,51 @@ __author__ = 'Lucas Theis <lucas@tuebingen.mpg.de>'
 __docformat__ = 'epytext'
 
 from numpy import ones, zeros, zeros_like, dot, multiply, sum, mean, cov
-from numpy import sqrt, exp, log, pi, squeeze, diag
+from numpy import sqrt, exp, log, pi, squeeze, diag, eye
 from numpy.random import rand, randn
 from numpy.linalg import inv, det, eig
 from distribution import Distribution
 from utils import logsumexp
 
-from numpy import sort
-
 class GSM(Distribution):
 	"""
 	Finite Gaussian scale mixture.
+
+	For regularization, use the model parameters alpha, beta, gamma and theta.
+	To turn regularization off, set these parameters to None. The parameters are
+	initialized with moderate values. For stronger regularization, turn alpha
+	and beta up and gamma and theta down.
+
+	B{References:}
+		- M. Wainwright and E. Simoncelli (2000). I{Scale Mixtures of Gaussians
+		and the Statistics of Natural Images.} NIPS 12.
+
+	@type dim: integer
+	@ivar dim: dimensionality of the model
+
+	@type priors: array_like
+	@ivar priors: prior weights over scale components
+
+	@type mean: array_like
+	@ivar mean: mean of the distribution
+
+	@type precision: array_like
+	@ivar precision: precision matrix
+
+	@type scales: array_like
+	@ivar scales: precision scale factors
+
+	@type alpha: real > 0 or None
+	@ivar alpha: parameter of Dirichlet prior over component weights
+
+	@type gamma: real > 0 or None
+	@ivar gamma: parameter of Wishart prior over the precision matrix
+
+	@type beta: real > -1 or None
+	@ivar beta: parameter of Gamma prior over precision scale factors
+
+	@type theta: real > 0 or None
+	@ivar theta: parameter of Gamma prior over precision scale factors
 	"""
 
 	def __init__(self, dim, num_scales):
@@ -47,8 +81,15 @@ class GSM(Distribution):
 		# initial mean
 		self.mean = zeros([dim, 1])
 
-		# parameter of regularizing Dirichlet prior
+		# parameter of regularizing Dirichlet prior over priors
 		self.alpha = 1.001
+
+		# parameter of regularizing Wishart prior over precision matrix
+		self.gamma = 1E2
+
+		# parameters of regularizing Gamma prior over scales
+		self.beta = 0.0
+		self.theta = 1E3
 
 
 
@@ -73,43 +114,60 @@ class GSM(Distribution):
 
 
 	def train(self, data, weights=None):
-		# compute posterior over scales
+		# compute posterior over scales (E)
 		posterior = exp(self.logposterior(data))
 
-		# incorporate conditional model prior
 		if weights is not None:
+			# compute posterior over model and scales
 			posterior *= weights
 
 		# helper variable
 		tmp1 = multiply(posterior, self.scales.reshape(-1, 1))
 
-		# adjust prior over scales
-		self.priors = mean((posterior + 0.001) / sum(posterior + 0.001, 0), 1)
+		# adjust prior over scales (M)
+		self.priors = mean(posterior, 1)
 
-		# adjust mean
+		if self.alpha is not None:
+			# regularization with Dirichlet prior
+			self.priors += self.alpha - 1.
+		self.priors /= sum(self.priors)
+
+		# adjust mean (M)
 		self.mean = sum(dot(data, tmp1.T), 1) / sum(tmp1)
 		self.mean.resize([self.dim, 1])
 
 		# center data
 		data = data - self.mean
 
-		# adjust precision matrix
+		# compute covariance
 		covariance = zeros_like(self.precision)
 		for j in range(self.num_scales):
 			covariance += cov(multiply(data, sqrt(tmp1[j, :])))
 
+		if self.gamma is not None:
+			# regularization with Wishart prior
+			covariance += eye(covariance.shape[0]) / self.gamma
+
+		# compute precision matrix and normalize by determinant (M)
 		val, vec = eig(covariance)
-		#print sort(val)
 		val = exp(mean(log(val)) - log(val))
 
 		self.precision = dot(vec, dot(diag(val), vec.T))
 
-		data = sum(multiply(data, dot(self.precision, data)), 0)
-		data.resize([data.shape[0], 1])
+		# adjust scales (M)
+		tmp2 = sum(multiply(data, dot(self.precision, data)), 0)
+		tmp2.resize([tmp2.shape[0], 1])
 
-		# adjust scales
-		self.scales = self.dim * sum(posterior[:, :], 1) / \
-		    squeeze(dot(posterior[:, :], data))
+		if self.theta is None or self.beta is None:
+			# no regularization
+			tmp3 = self.dim * sum(posterior, 1)
+			tmp4 = squeeze(dot(posterior, tmp2))
+		else:
+			# regularization with Gamma prior
+			tmp3 = self.dim * mean(posterior, 1) + 2. * self.beta
+			tmp4 = squeeze(dot(posterior, tmp2)) / posterior.shape[1] + 2. / self.theta
+
+		self.scales = tmp3 / tmp4
 
 
 
