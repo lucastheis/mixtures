@@ -82,6 +82,8 @@ class Mixture(Distribution):
 
 	def train(self, data, weights=None, num_epochs=1):
 		for epoch in range(num_epochs):
+			#print '001'
+
 			# compute posterior over components (E)
 			post = exp(self.logposterior(data))
 
@@ -91,9 +93,13 @@ class Mixture(Distribution):
 			if weights is not None:
 				post *= weights
 
+			#print '002'
+
 			# adjust priors over components (M)
 			self.priors = mean(post, 1) + (self.alpha - 1.)
 			self.priors /= sum(self.priors)
+
+			#print '003'
 
 			# adjust remaining parameters (M)
 			for i in range(len(self)):
