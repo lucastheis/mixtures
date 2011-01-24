@@ -13,6 +13,7 @@ from numpy.linalg import inv, det, eig, slogdet
 from transform import Transform
 from scipy.stats import chi
 from scipy.special import gamma
+from scipy.optimize import bisect
 from utils import logsumexp, gammaincinv
 
 class RadialGaussianization(Transform):
@@ -72,7 +73,8 @@ class RadialGaussianization(Transform):
 		return multiply(igrcdf(rcdf(norm), self.gsm.dim) / norm, data)
 
 
-	def inverse(self, data):
+
+	def inverse(self, data, maxiter=100):
 		def rcdf(norm):
 			"""
 			Radial CDF.
