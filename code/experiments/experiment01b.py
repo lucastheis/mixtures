@@ -6,16 +6,21 @@ from models import MoGSM, MoGaussian
 from numpy import load, log
 from tools import preprocess, Experiment
 
+# number of scales
+parameters = [[8], [10], [12], [14], [16]]
+
 def main(argv):
 	experiment = Experiment()
 
+	params = parameters[int(argv[1])]
+
 	# load and preprocess data
-	data = load('./data/patches16x16.npz')['data']
+	data = load('./data/vanhateren8x8.npz')['data']
 	data = preprocess(data)
 
 	# train a mixture of Gaussian scale mixtures
-	mixture = MoGSM(data.shape[0], 8, 12)
-	mixture.train(data, num_epochs=100)
+	mixture = MoGSM(data.shape[0], params[0], 12)
+	mixture.train(data, num_epochs=70)
 
 	# evaluate model
 	avglogloss = mixture.evaluate(data) / log(2)
