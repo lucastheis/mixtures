@@ -1,3 +1,7 @@
+"""
+Train mixture of GSMs on 4x4 van Hateren patches and radially Gaussianize data.
+"""
+
 import sys
 
 sys.path.append('./code')

@@ -1,3 +1,7 @@
+"""
+Train mixture of GSMs on 8x8 van Hateren patches and evaluate model.
+"""
+
 import sys
 
 sys.path.append('./code')
