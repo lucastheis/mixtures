@@ -12,11 +12,11 @@ def main(argv):
 	experiment = Experiment()
 
 	# load and preprocess data samples
-	data = load('./data/vanhateren4x4.npz')['data']
+	data = load('./data/vanhateren8x8.npz')['data']
 	data = preprocess(data)
 
 	# train mixture of Gaussian scale mixtures
-	mixture = MoGSM(data.shape[0], 5, 6)
+	mixture = MoGSM(data.shape[0], 8, 4)
 	mixture.train(data[:, :50000], num_epochs=100)
 
 	# split data

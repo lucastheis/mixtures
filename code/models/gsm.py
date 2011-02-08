@@ -9,7 +9,7 @@ __docformat__ = 'epytext'
 from numpy import ones, zeros, zeros_like, dot, multiply, sum, mean, cov
 from numpy import sqrt, exp, log, pi, squeeze, diag, eye
 from numpy.random import rand, randn
-from numpy.linalg import inv, det, eig
+from numpy.linalg import inv, det, eig, slogdet
 from distribution import Distribution
 from utils import logsumexp
 
@@ -88,8 +88,8 @@ class GSM(Distribution):
 		self.gamma = 1E2
 
 		# parameters of regularizing Gamma prior over scales
-		self.beta = 0.0
-		self.theta = 1E3
+		self.beta = 0.5
+		self.theta = 1E2
 
 
 
@@ -149,10 +149,8 @@ class GSM(Distribution):
 			covariance += eye(covariance.shape[0]) / self.gamma
 
 		# compute precision matrix and normalize by determinant (M)
-		val, vec = eig(covariance)
-		val = exp(mean(log(val)) - log(val))
-
-		self.precision = dot(vec, dot(diag(val), vec.T))
+		self.precision = inv(covariance)
+		self.precision /= exp(slogdet(self.precision)[1] / self.dim)
 
 		# adjust scales (M)
 		tmp2 = sum(multiply(data, dot(self.precision, data)), 0)
