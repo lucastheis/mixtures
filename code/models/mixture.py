@@ -36,7 +36,7 @@ class Mixture(Distribution):
 		self.priors = None
 
 		# parameter of regularizing Dirichlet prior
-		self.alpha = 1.001
+		self.alpha = 2.
 
 
 
@@ -102,7 +102,7 @@ class Mixture(Distribution):
 				post *= weights
 
 			# adjust priors over components (M)
-			self.priors = mean(post, 1)
+			self.priors = sum(post, 1)
 
 			if self.alpha is not None:
 				# regularization with Dirichlet prior

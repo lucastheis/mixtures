@@ -82,14 +82,14 @@ class GSM(Distribution):
 		self.mean = zeros([dim, 1])
 
 		# parameter of regularizing Dirichlet prior over priors
-		self.alpha = 1.001
+		self.alpha = 2.
 
 		# parameter of regularizing Wishart prior over precision matrix
-		self.gamma = 1E2
+		self.gamma = 1.
 
 		# parameters of regularizing Gamma prior over scales
 		self.beta = 0.5
-		self.theta = 1E2
+		self.theta = 100.
 
 
 
@@ -125,7 +125,7 @@ class GSM(Distribution):
 		tmp1 = multiply(posterior, self.scales.reshape(-1, 1))
 
 		# adjust prior over scales (M)
-		self.priors = mean(posterior, 1)
+		self.priors = sum(posterior, 1)
 
 		if self.alpha is not None:
 			# regularization with Dirichlet prior
@@ -146,7 +146,7 @@ class GSM(Distribution):
 
 		if self.gamma is not None:
 			# regularization with Wishart prior
-			covariance += eye(covariance.shape[0]) / self.gamma
+			covariance += eye(covariance.shape[0]) / self.gamma / data.shape[1]
 
 		# compute precision matrix and normalize by determinant (M)
 		self.precision = inv(covariance)
@@ -156,14 +156,13 @@ class GSM(Distribution):
 		tmp2 = sum(multiply(data, dot(self.precision, data)), 0)
 		tmp2.resize([tmp2.shape[0], 1])
 
-		if self.theta is None or self.beta is None:
-			# no regularization
-			tmp3 = self.dim * sum(posterior, 1)
-			tmp4 = squeeze(dot(posterior, tmp2))
-		else:
+		tmp3 = self.dim * sum(posterior, 1)
+		tmp4 = squeeze(dot(posterior, tmp2))
+
+		if self.theta is not None and self.beta is not None:
 			# regularization with Gamma prior
-			tmp3 = self.dim * mean(posterior, 1) + 2. * self.beta
-			tmp4 = squeeze(dot(posterior, tmp2)) / posterior.shape[1] + 2. / self.theta
+			tmp3 += 2. * self.beta
+			tmp4 += 2. / self.theta
 
 		self.scales = tmp3 / tmp4
 

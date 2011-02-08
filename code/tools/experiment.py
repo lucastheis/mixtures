@@ -7,7 +7,7 @@ Manage and display experimental results.
 __license__ = 'MIT License <http://www.opensource.org/licenses/mit-license.php>'
 __author__ = 'Lucas Theis <lucas@tuebingen.mpg.de>'
 __docformat__ = 'epytext'
-__version__ = '0.1.1'
+__version__ = '0.2.0'
 
 import sys
 import os
@@ -252,17 +252,33 @@ class Experiment:
 
 
 
+	def __getitem__(self, key):
+		return self.results[key]
+
+
+
+	def __setitem__(self, key, value):
+		self.results[key] = value
+
+
+
 def main(argv):
 	"""
 	Load and display experiment information.
 	"""
 
-	if len(sys.argv) < 2:
+	if len(argv) < 2:
 		print 'Usage:', argv[0], '<filename>'
 		return 0
 
 	# load experiment
 	experiment = Experiment(sys.argv[1])
+
+	if len(argv) > 2:
+		# print arguments
+		for arg in argv[2:]:
+			print experiment[arg]
+		return 0
 
 	# print summary of experiment
 	print experiment
