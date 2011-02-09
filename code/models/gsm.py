@@ -112,8 +112,18 @@ class GSM(Distribution):
 
 
 
-
 	def train(self, data, weights=None):
+		"""
+		Adapt the parameters of the model using expectation maximization (EM).
+		In each M-step, alternating gradient ascent is performed.
+
+		@type  data: array_like
+		@param data: data stored in columns
+
+		@type  weights: array_like
+		@param weights: an optional weight for every data point
+		"""
+
 		# compute posterior over scales (E)
 		posterior = exp(self.logposterior(data))
 

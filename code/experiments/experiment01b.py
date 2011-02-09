@@ -7,27 +7,22 @@ import sys
 sys.path.append('./code')
 
 from models import MoGSM, MoGaussian
-from numpy import load, log
-from tools import preprocess, Experiment
-
-# number of scales
-parameters = [[8], [10], [12], [14], [16]]
+from numpy import load
+from tools import Experiment, preprocess
 
 def main(argv):
 	experiment = Experiment()
-
-	params = parameters[int(argv[1])]
 
 	# load and preprocess data
 	data = load('./data/vanhateren8x8.npz')['data']
 	data = preprocess(data)
 
 	# train a mixture of Gaussian scale mixtures
-	mixture = MoGSM(data.shape[0], params[0], 12)
-	mixture.train(data, num_epochs=70)
+	mixture = MoGSM(data.shape[0], 8, 4)
+	mixture.train(data, num_epochs=100)
 
-	# evaluate model
-	avglogloss = mixture.evaluate(data) / log(2)
+	# compute training error
+	avglogloss = mixture.evaluate(data)
 
 	# store results
 	experiment.results['mixture'] = mixture

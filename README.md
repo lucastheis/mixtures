@@ -1,8 +1,8 @@
-Hierarchical Gaussianization
-============================
+Mixture modeling and Gaussianization
+====================================
 
-Code for hierarchical Gaussianization with mixtures of elliptically contoured
-distributions such as Gaussian scale mixtures.
+Code for mixture mixtures of elliptically contoured distributions and radial
+Gaussianization.
 
 
 Requirements

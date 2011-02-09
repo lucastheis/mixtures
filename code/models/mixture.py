@@ -91,11 +91,21 @@ class Mixture(Distribution):
 
 
 	def train(self, data, weights=None, num_epochs=1):
+		"""
+		Adapt the parameters of the model using expectation maximization (EM).
+
+		@type  data: array_like
+		@param data: data stored in columns
+
+		@type  weights: array_like
+		@param weights: an optional weight for every data point
+		"""
+
 		for epoch in range(num_epochs):
 			# compute posterior over components (E)
 			post = exp(self.logposterior(data))
 
-			print epoch, self.evaluate(data) / log(2)
+			print epoch, self.evaluate(data)
 
 			# incorporate conditional prior
 			if weights is not None:

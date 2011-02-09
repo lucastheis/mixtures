@@ -7,8 +7,8 @@ import sys
 sys.path.append('./code')
 
 from models import MoGSM, RadialGaussianization
-from numpy import load, log, exp, concatenate
-from tools import Experiment, contours, preprocess, patchutil
+from numpy import load
+from tools import Experiment, preprocess
 
 from matplotlib.pyplot import figure
 
@@ -16,12 +16,12 @@ def main(argv):
 	experiment = Experiment()
 
 	# load and preprocess data samples
-	data = load('./data/vanhateren8x8.npz')['data']
+	data = load('./data/vanhateren4x4.npz')['data']
 	data = preprocess(data)
 
 	# train mixture of Gaussian scale mixtures
 	mixture = MoGSM(data.shape[0], 8, 4)
-	mixture.train(data[:, :50000], num_epochs=100)
+	mixture.train(data, num_epochs=100)
 
 	# split data
 	batches = mixture.split(data)
