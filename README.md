@@ -9,7 +9,7 @@ Requirements
 ------------
 
 * Python >= 2.6.6
-* Numpy >= 1.5.0
+* Numpy >= 2.0.0
 * Scipy >= 0.8.0
 
 The code has been tested with the above versions, but older versions might also
