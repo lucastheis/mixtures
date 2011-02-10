@@ -7,7 +7,7 @@ Manage and display experimental results.
 __license__ = 'MIT License <http://www.opensource.org/licenses/mit-license.php>'
 __author__ = 'Lucas Theis <lucas@tuebingen.mpg.de>'
 __docformat__ = 'epytext'
-__version__ = '0.2.0'
+__version__ = '0.2.1'
 
 import sys
 import os
@@ -16,13 +16,14 @@ import scipy
 
 sys.path.append('./code')
 
-from pickle import dump, load
+from pickle import Unpickler, dump
 from subprocess import Popen, PIPE
 from os import path
 from warnings import warn
 from time import time, strftime, localtime
 from numpy import random
 from numpy.random import rand
+from distutils.version import StrictVersion
 
 class Experiment:
 	"""
@@ -259,6 +260,36 @@ class Experiment:
 
 	def __setitem__(self, key, value):
 		self.results[key] = value
+
+
+
+class XUnpickler(Unpickler):
+	"""
+	An extension of the Unpickler class which resolves some backwards
+	compatibility issues of Numpy.
+	"""
+
+	def find_class(self, module, name):
+		"""
+		Helps Unpickler to find certain Numpy modules.
+		"""
+
+		try:
+			numpy_version = StrictVersion(numpy.__version__)
+
+			if numpy_version >= '1.5.0':
+				if module == 'numpy.core.defmatrix':
+					module = 'numpy.matrixlib.defmatrix'
+
+		except ValueError:
+			pass
+
+		return Unpickler.find_class(self, module, name)
+
+
+
+def load(file):
+	return XUnpickler(file).load()
 
 
 
