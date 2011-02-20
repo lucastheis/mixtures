@@ -7,7 +7,7 @@ import sys
 sys.path.append('./code')
 
 from models import MoGSM, MoGaussian
-from numpy import load, log
+from numpy import load, log, mean
 from tools import Experiment, preprocess
 
 def main(argv):
@@ -17,6 +17,7 @@ def main(argv):
 	data = load('./data/vanhateren8x8.npz')['data']
 #	data = preprocess(data)
 	data = log(data + 1.)
+	data -= mean(data)
 
 	# train a mixture of Gaussian scale mixtures
 	mixture = MoGSM(data.shape[0], 8, 4)
