@@ -19,10 +19,10 @@ def main(argv):
 
 	# train a mixture of Gaussian scale mixtures
 	mixture = MoGSM(data.shape[0], 8, 4)
-	mixture.train(data, num_epochs=100)
+	mixture.train(data[:, :100000], num_epochs=100)
 
 	# compute training error
-	avglogloss = mixture.evaluate(data)
+	avglogloss = mixture.evaluate(data[:, 100000:])
 
 	# store results
 	experiment.results['mixture'] = mixture
