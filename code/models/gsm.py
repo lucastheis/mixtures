@@ -85,11 +85,11 @@ class GSM(Distribution):
 		self.alpha = 2.
 
 		# parameter of regularizing Wishart prior over precision matrix
-		self.gamma = 1.
+		self.gamma = None#1.
 
 		# parameters of regularizing Gamma prior over scales
-		self.beta = 0.5
-		self.theta = 100.
+		self.beta = None#0.5
+		self.theta = None#100.
 
 
 

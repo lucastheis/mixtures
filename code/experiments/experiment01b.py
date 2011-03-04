@@ -15,9 +15,7 @@ def main(argv):
 
 	# load and preprocess data
 	data = load('./data/vanhateren8x8.npz')['data']
-#	data = preprocess(data)
-	data = log(data + 1.)
-	data -= mean(data)
+	data = preprocess(data)
 
 	# train a mixture of Gaussian scale mixtures
 	mixture = MoGSM(data.shape[0], 8, 4)
