@@ -13,6 +13,8 @@ from numpy.linalg import det, inv, eig
 from gsm import GSM
 from utils import logsumexp
 from distribution import Distribution
+from tools.parallel import map
+from tools import shmarray
 
 class Mixture(Distribution):
 	"""
@@ -31,6 +33,7 @@ class Mixture(Distribution):
 	@type alpha: positive real
 	@ivar alpha: parameter of Dirichlet prior over component weights
 	"""
+
 	def __init__(self):
 		self.components = []
 		self.priors = None
@@ -104,6 +107,7 @@ class Mixture(Distribution):
 		for epoch in range(num_epochs):
 			# compute posterior over components (E)
 			post = exp(self.logposterior(data))
+			post /= sum(post, 0)
 
 			print epoch, self.evaluate(data)
 
@@ -119,19 +123,22 @@ class Mixture(Distribution):
 				self.priors += self.alpha - 1.
 			self.priors /= sum(self.priors)
 
-			# adjust remaining parameters (M)
-			for i in range(len(self)):
-				self[i].train(data, weights=post[i, :])
+			# adjust components (M)
+			def train_(i):
+				self.components[i].train(data, weights=post[i, :])
+				return self.components[i]
+			self.components = map(train_, range(len(self)))
 
 
 
 	def loglikelihood(self, data):
 		# allocate memory
-		logjoint = zeros([len(self), data.shape[1]])
+		logjoint = shmarray.zeros([len(self), data.shape[1]])
 
 		# compute joint density over components and data points
-		for i in range(len(self)):
+		def loglikelihood_(i):
 			logjoint[i, :] = self[i].loglikelihood(data) + log(self.priors[i])
+		map(loglikelihood_, range(len(self)))
 
 		# marginalize
 		return logsumexp(logjoint, 0)
@@ -147,11 +154,12 @@ class Mixture(Distribution):
 		"""
 
 		# allocate memory
-		logpost = zeros([len(self), data.shape[1]])
+		logpost = shmarray.zeros([len(self), data.shape[1]])
 
 		# compute log-joint
-		for i in range(len(self)):
+		def logposterior_(i):
 			logpost[i, :] = self[i].loglikelihood(data) + log(self.priors[i])
+		map(logposterior_, range(len(self)))
 
 		# normalize to get log-posterior
 		logpost -= logsumexp(logpost, 0)
@@ -192,3 +200,31 @@ class Mixture(Distribution):
 			batches.append(data[:, ind == k])
 
 		return batches
+
+
+
+	def __getstate__(self):
+		"""
+		Called upon pickling.
+
+		@rtype: dictionary
+		@return: the member variables of an MoCGSM instance
+		"""
+
+		# turn shared memory arrays into regular arrays
+		for key, value in self.__dict__.iteritems():
+			if type(value) is shmarray.shmarray:
+				self.__dict__[key] = asarray(value)
+		return self.__dict__
+
+
+
+	def __setstate__(self, state):
+		"""
+		Called upon unpickling.
+
+		@type  state: dictionary
+		@param state: the member variables of an MoCGSM instance
+		"""
+
+		self.__dict__ = state
