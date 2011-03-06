@@ -1,9 +1,7 @@
 Mixture modeling and Gaussianization
 ====================================
 
-Code for mixture mixtures of elliptically contoured distributions and radial
-Gaussianization.
-
+Code for several mixture distributions and radial Gaussianization.
 
 Requirements
 ------------
@@ -14,7 +12,6 @@ Requirements
 
 The code has been tested with the above versions, but older versions might also
 work.
-
 
 Help
 ----
