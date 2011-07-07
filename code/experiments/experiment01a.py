@@ -10,8 +10,6 @@ from models import MoGSM, RadialGaussianization
 from numpy import load
 from tools import Experiment, preprocess
 
-from matplotlib.pyplot import figure
-
 def main(argv):
 	experiment = Experiment()
 

@@ -156,7 +156,7 @@ class GSM(Distribution):
 
 		if self.gamma is not None:
 			# regularization with Wishart prior
-			covariance += eye(covariance.shape[0]) / self.gamma / data.shape[1]
+			covariance += eye(covariance.shape[0]) / self.gamma / sum(weights)
 
 		# compute precision matrix and normalize by determinant (M)
 		self.precision = inv(covariance)

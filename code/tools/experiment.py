@@ -7,7 +7,7 @@ Manage and display experimental results.
 __license__ = 'MIT License <http://www.opensource.org/licenses/mit-license.php>'
 __author__ = 'Lucas Theis <lucas@tuebingen.mpg.de>'
 __docformat__ = 'epytext'
-__version__ = '0.2.1'
+__version__ = '0.3.2'
 
 import sys
 import os
@@ -86,7 +86,7 @@ class Experiment:
 				strl.append('commit \t\t ' + self.commit)
 
 		# results
-		strl.append('results \t {' + ', '.join(self.results.keys()) + '}')
+		strl.append('results \t {' + ', '.join(map(str, self.results.keys())) + '}')
 
 		# comment
 		if self.comment:
@@ -137,6 +137,9 @@ class Experiment:
 			# get OS information
 			self.platform = sys.platform
 
+			# arguments to the program
+			self.argv = sys.argv
+
 			# environment variables
 			self.environ = os.environ
 
@@ -166,12 +169,10 @@ class Experiment:
 				# check if project contains uncommitted changes
 				pr1 = Popen(['git', 'status', '--porcelain'], stdout=PIPE)
 				pr2 = Popen(['egrep', '^.M'], stdin=pr1.stdout, stdout=PIPE)
+				self.modified = pr2.communicate()[0]
 
-				if pr2.communicate()[0]:
-					self.modified = True
+				if self.modified:
 					warn("Uncommitted changes.")
-				else:
-					self.modified = False
 			else:
 				# no git repository
 				self.commit = None
@@ -215,6 +216,7 @@ class Experiment:
 				'seed': self.seed,
 				'duration': self.duration,
 				'environ': self.environ,
+				'argv': self.argv,
 				'processors': self.processors,
 				'platform': self.platform,
 				'comment': self.comment,
@@ -250,6 +252,12 @@ class Experiment:
 			self.modified = res['modified']
 			self.versions = res['versions']
 			self.results = res['results']
+
+			if StrictVersion(res['version']) >= '0.3.1':
+				self.argv = res['argv']
+			else:
+				# argv unknown
+				self.argv = None
 
 
 
@@ -308,7 +316,10 @@ def main(argv):
 	if len(argv) > 2:
 		# print arguments
 		for arg in argv[2:]:
-			print experiment[arg]
+			try:
+				print experiment[arg]
+			except:
+				print experiment[int(arg)]
 		return 0
 
 	# print summary of experiment

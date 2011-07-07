@@ -8,6 +8,7 @@ __docformat__ = 'epytext'
 
 from numpy import multiply, dot, sum, mean, cov, sqrt, log, exp, pi, argsort
 from numpy import ones, zeros, zeros_like, eye, round, squeeze, concatenate
+from numpy import asarray
 from numpy.random import multinomial, rand, permutation
 from numpy.linalg import det, inv, eig
 from gsm import GSM

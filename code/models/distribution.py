@@ -14,7 +14,7 @@ class Distribution:
 	"""
 
 	def __init__(self):
-		raise Exception(self.__class__ + ' is an abstract class.')
+		raise Exception(str(self.__class__) + ' is an abstract class.')
 
 
 
