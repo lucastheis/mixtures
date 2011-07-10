@@ -31,6 +31,19 @@ class Distribution:
 
 
 
+	def initialize(self, data):
+		"""
+		Called on all mixture components the first time Mixture.train() is
+		called.
+
+		@type data: array_like
+		@param data: training data stored in columns
+		"""
+
+		pass
+
+
+
 	def train(self, data, weights=None):
 		"""
 		Adapt the parameters of the model to the given set of data points.

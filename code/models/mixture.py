@@ -39,6 +39,8 @@ class Mixture(Distribution):
 		self.components = []
 		self.priors = None
 
+		self.initialized = False
+
 		# parameter of regularizing Dirichlet prior
 		self.alpha = 2.
 
@@ -105,6 +107,14 @@ class Mixture(Distribution):
 		@param weights: an optional weight for every data point
 		"""
 
+		if not self.initialized:
+			# initialize components
+			def initialize_(i):
+				self.components[i].initialize(data)
+				return self.components[i]
+			self.components = map(initialize_, range(len(self)), max_processes=1)
+			self.initialized = True
+
 		for epoch in range(num_epochs):
 			# compute posterior over components (E)
 			post = exp(self.logposterior(data))
@@ -142,7 +152,7 @@ class Mixture(Distribution):
 		map(loglikelihood_, range(len(self)))
 
 		# marginalize
-		return logsumexp(logjoint, 0)
+		return asarray(logsumexp(logjoint, 0))
 
 
 
@@ -165,7 +175,7 @@ class Mixture(Distribution):
 		# normalize to get log-posterior
 		logpost -= logsumexp(logpost, 0)
 
-		return logpost
+		return asarray(logpost)
 
 
 
