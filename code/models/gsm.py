@@ -9,7 +9,7 @@ __docformat__ = 'epytext'
 from numpy import ones, zeros, zeros_like, dot, multiply, sum, mean, cov
 from numpy import sqrt, exp, log, pi, squeeze, diag, eye
 from numpy.random import rand, randn
-from numpy.linalg import inv, det, eig, slogdet
+from numpy.linalg import inv, det, eig, slogdet, cholesky
 from distribution import Distribution
 from utils import logsumexp
 
@@ -82,7 +82,7 @@ class GSM(Distribution):
 		self.mean = zeros([dim, 1])
 
 		# parameter of regularizing Dirichlet prior over priors
-		self.alpha = 2.
+		self.alpha = None#2.
 
 		# parameter of regularizing Wishart prior over precision matrix
 		self.gamma = None#1.
@@ -90,6 +90,20 @@ class GSM(Distribution):
 		# parameters of regularizing Gamma prior over scales
 		self.beta = None#0.5
 		self.theta = None#100.
+
+
+
+	def initialize(self, data):
+		# calculate mean and precision of data
+		data_mean = mean(data, 1).reshape([self.dim, 1])
+		data_cov = cov(data)
+
+		# Cholesky factor
+		chol = cholesky(data_cov)
+
+		# randomize parameters
+		self.mean = data_mean + dot(chol / 4., randn(self.dim, 1))
+		self.precision = inv(cov(dot(chol, randn(self.dim, self.dim * self.dim))))
 
 
 
@@ -152,7 +166,8 @@ class GSM(Distribution):
 		# compute covariance
 		covariance = zeros_like(self.precision)
 		for j in range(self.num_scales):
-			covariance += cov(multiply(data, sqrt(tmp1[j, :])))
+			tmp5 = multiply(data, sqrt(tmp1[j, :]))
+			covariance += dot(tmp5, tmp5.T) / data.shape[1]
 
 		if self.gamma is not None:
 			# regularization with Wishart prior

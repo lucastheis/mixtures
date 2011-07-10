@@ -7,7 +7,8 @@ __author__ = 'Lucas Theis <lucas@tuebingen.mpg.de>'
 __docformat__ = 'epytext'
 
 from numpy import cov, mean, zeros, sum, multiply, pi, log, dot, sqrt, diag
-from numpy.linalg import inv, slogdet, eig
+from numpy import real, eye
+from numpy.linalg import inv, slogdet, eig, cholesky
 from numpy.random import randn
 from distribution import Distribution
 
@@ -21,7 +22,7 @@ class Gaussian(Distribution):
 		self.mean = zeros([dim, 1])
 
 		# draw precision matrix from inverse Wishart distribution
-		self.precision = inv(cov(randn(dim, dim * dim)))
+		self.precision = eye(dim)
 
 
 
@@ -38,6 +39,19 @@ class Gaussian(Distribution):
 
 
 
+	def initialize(self, data):
+		# calculate mean and precision of data
+		data_mean = mean(data, 1).reshape([self.dim, 1])
+		data_cov = cov(data)
+
+		# Cholesky factor
+		chol = cholesky(data_cov)
+
+		# randomize parameters
+		self.mean = data_mean + dot(chol / 4., randn(self.dim, 1))
+		self.precision = inv(cov(dot(chol, randn(self.dim, self.dim * self.dim))))
+
+
 
 	def train(self, data, weights=None):
 		if weights is None:
@@ -47,11 +61,12 @@ class Gaussian(Distribution):
 		else:
 			# adjust mean
 			tmp1 = mean(weights)
-			self.mean = mean(multiply(data, weights)) / tmp1
+			self.mean = mean(multiply(data, weights), 1) / tmp1
+			self.mean.resize(self.dim, 1)
 
 			# adjust precision matrix
-			tmp2 = multiply(data - self.mean, sqrt(weights))
-			self.precision = inv(cov(tmp2) / tmp1)
+			tmp2 = multiply(data - self.mean, sqrt(weights) / sqrt(data.shape[1]))
+			self.precision = inv(dot(tmp2, tmp2.T) / tmp1)
 
 
 
