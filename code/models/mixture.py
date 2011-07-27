@@ -152,7 +152,7 @@ class Mixture(Distribution):
 		map(loglikelihood_, range(len(self)))
 
 		# marginalize
-		return asarray(logsumexp(logjoint, 0))
+		return asarray(logsumexp(logjoint, 0)).flatten()
 
 
 
