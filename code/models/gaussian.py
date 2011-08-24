@@ -20,8 +20,6 @@ class Gaussian(Distribution):
 	def __init__(self, dim):
 		self.dim = dim
 		self.mean = zeros([dim, 1])
-
-		# draw precision matrix from inverse Wishart distribution
 		self.precision = eye(dim)
 
 

@@ -179,8 +179,6 @@ def chunkify(lst, num_chunks):
 
 	return chunks
 
-	#return [lst[i::num_chunks] for i in range(num_chunks)]
-
 
 
 def chunks(num_indices, num_chunks):

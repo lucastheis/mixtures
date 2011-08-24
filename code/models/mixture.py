@@ -38,11 +38,10 @@ class Mixture(Distribution):
 	def __init__(self):
 		self.components = []
 		self.priors = None
-
 		self.initialized = False
 
 		# parameter of regularizing Dirichlet prior
-		self.alpha = 2.
+		self.alpha = None#2.
 
 
 
@@ -96,7 +95,7 @@ class Mixture(Distribution):
 
 
 
-	def train(self, data, weights=None, num_epochs=1):
+	def train(self, data, weights=None, num_epochs=100, threshold=1e-5):
 		"""
 		Adapt the parameters of the model using expectation maximization (EM).
 
@@ -105,6 +104,12 @@ class Mixture(Distribution):
 
 		@type  weights: array_like
 		@param weights: an optional weight for every data point
+
+		@type  num_epochs: integer
+		@param num_epochs: maximum number of training epochs
+
+		@type  threshold: float
+		@param threshold: training stops if performance gain is below threshold
 		"""
 
 		if not self.initialized:
@@ -115,12 +120,16 @@ class Mixture(Distribution):
 			self.components = map(initialize_, range(len(self)), max_processes=1)
 			self.initialized = True
 
+		# current performance
+		value = self.evaluate(data)
+
+		if Distribution.VERBOSITY >= 2:
+			print 'Epoch 0\t', value
+
 		for epoch in range(num_epochs):
 			# compute posterior over components (E)
 			post = exp(self.logposterior(data))
 			post /= sum(post, 0)
-
-			print epoch, self.evaluate(data)
 
 			# incorporate conditional prior
 			if weights is not None:
@@ -139,6 +148,21 @@ class Mixture(Distribution):
 				self.components[i].train(data, weights=post[i, :])
 				return self.components[i]
 			self.components = map(train_, range(len(self)))
+
+			# check for convergence
+			new_value = self.evaluate(data)
+
+			if Distribution.VERBOSITY >= 2:
+				print 'Epoch ', epoch, '\t', new_value
+
+			if value - new_value < threshold:
+				if Distribution.VERBOSITY >= 1:
+					print 'Training converged...'
+				return
+			value = new_value
+
+		if Distribution.VERBOSITY >= 1:
+			print 'Training finished...'
 
 
 

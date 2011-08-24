@@ -13,6 +13,8 @@ class Distribution:
 	Provides an interface and common functionality for probabilistic models.
 	"""
 
+	VERBOSITY = 2
+
 	def __init__(self):
 		raise Exception(str(self.__class__) + ' is an abstract class.')
 
