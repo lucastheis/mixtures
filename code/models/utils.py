@@ -60,7 +60,7 @@ def logsumexp(x, ax=None):
 		output_shape[ax] = 1
 
 		x_max = max(x, ax).reshape(output_shape)
-		return x_max + sum(exp(x - x_max), ax).reshape(output_shape)
+		return x_max + log(sum(exp(x - x_max), ax).reshape(output_shape))
 	else:
 		x_max = x.max()
 		return x_max + log(exp(x - x_max).sum(ax))
