@@ -59,12 +59,8 @@ def logsumexp(x, ax=None):
 		output_shape = list(x.shape)
 		output_shape[ax] = 1
 
-		x_max = zeros(output_shape)
-		max(x, ax, out=x_max)
-
-		res = zeros(output_shape)
-		sum(exp(x - x_max), ax, out=res)
-		return x_max + log(res)
+		x_max = max(x, ax).reshape(output_shape)
+		return x_max + sum(exp(x - x_max), ax).reshape(output_shape)
 	else:
 		x_max = x.max()
 		return x_max + log(exp(x - x_max).sum(ax))
