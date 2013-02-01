@@ -124,7 +124,7 @@ class Mixture(Distribution):
 		value = self.evaluate(data)
 
 		if Distribution.VERBOSITY >= 2:
-			print 'Epoch 0\t', value
+			print 'epoch 0\t', value
 
 		for epoch in range(num_epochs):
 			# compute posterior over components (E)
@@ -153,16 +153,16 @@ class Mixture(Distribution):
 			new_value = self.evaluate(data)
 
 			if Distribution.VERBOSITY >= 2:
-				print 'Epoch ', epoch, '\t', new_value
+				print 'epoch ', epoch + 1, '\t', new_value
 
 			if value - new_value < threshold:
 				if Distribution.VERBOSITY >= 1:
-					print 'Training converged...'
+					print 'training converged...'
 				return
 			value = new_value
 
 		if Distribution.VERBOSITY >= 1:
-			print 'Training finished...'
+			print 'training finished...'
 
 
 
