@@ -8,13 +8,13 @@ __docformat__ = 'epytext'
 
 from numpy import multiply, dot, sum, mean, cov, sqrt, log, exp, pi, argsort
 from numpy import ones, zeros, zeros_like, eye, round, squeeze, concatenate
-from numpy import asarray
+from numpy import asarray, vstack
 from numpy.random import multinomial, rand, permutation
 from numpy.linalg import det, inv, eig
 from gsm import GSM
 from utils import logsumexp
 from distribution import Distribution
-from tools.parallel import map
+from tools import mapp as map
 from tools import shmarray
 
 class Mixture(Distribution):
@@ -117,7 +117,7 @@ class Mixture(Distribution):
 			def initialize_(i):
 				self.components[i].initialize(data)
 				return self.components[i]
-			self.components = map(initialize_, range(len(self)), max_processes=1)
+			self.components = map(initialize_, range(len(self)))
 			self.initialized = True
 
 		# current performance
@@ -167,16 +167,23 @@ class Mixture(Distribution):
 
 
 	def loglikelihood(self, data):
-		# allocate memory
-		logjoint = shmarray.zeros([len(self), data.shape[1]])
+		"""
+		Computes the log-likelihood of the model for the given data.
+
+		@type  data: array_like
+		@param data: data points stored in columns
+
+		@rtype: ndarray
+		@return: a log-likelihood for each data point
+		"""
 
 		# compute joint density over components and data points
 		def loglikelihood_(i):
-			logjoint[i, :] = self[i].loglikelihood(data) + log(self.priors[i])
-		map(loglikelihood_, range(len(self)))
+			return self[i].loglikelihood(data) + log(self.priors[i])
+		logjoint = vstack(map(loglikelihood_, range(len(self))))
 
 		# marginalize
-		return asarray(logsumexp(logjoint, 0)).flatten()
+		return logsumexp(logjoint, 0).flatten()
 
 
 
@@ -186,24 +193,22 @@ class Mixture(Distribution):
 
 		@type  data: array_like
 		@param data: data points stored in columns
+
+		@rtype: ndarray
+		@return: a posterior distribution for each data point
 		"""
 
-		# allocate memory
-		logpost = shmarray.zeros([len(self), data.shape[1]])
-
-		# compute log-joint
+		# compute unnormalized log-posterior
 		def logposterior_(i):
-			logpost[i, :] = self[i].loglikelihood(data) + log(self.priors[i])
-		map(logposterior_, range(len(self)))
+			return self[i].loglikelihood(data) + log(self.priors[i])
+		logpost = vstack(map(logposterior_, range(len(self))))
 
-		# normalize to get log-posterior
-		logpost -= logsumexp(logpost, 0)
-
-		return asarray(logpost)
+		# normalize posterior
+		return asarray(logpost) - logsumexp(logpost, 0)
 
 
 
-	def split(self, data):
+	def assign(self, data):
 		"""
 		Randomly assigns data points to mixture components.
 		
@@ -214,7 +219,7 @@ class Mixture(Distribution):
 		@param data: data stored in columns
 
 		@rtype: C{list}
-		@return: list of arrays containing the data
+		@return: a partitioning of the data
 		"""
 
 		# compute posterior over components
@@ -229,7 +234,7 @@ class Mixture(Distribution):
 			cum += post[k - 1, :]
 			ind[uni > cum] = k
 
-		# split data
+		# split data i
 		batches = []
 		for k in range(len(self)):
 			batches.append(data[:, ind == k])

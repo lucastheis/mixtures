@@ -8,7 +8,9 @@ sys.path.append('./code')
 
 from models import MoGSM, MoGaussian
 from numpy import load, log, mean
-from tools import Experiment, preprocess
+from tools import Experiment, preprocess, mapp
+
+mapp.max_processes = 1
 
 def main(argv):
 	experiment = Experiment()
