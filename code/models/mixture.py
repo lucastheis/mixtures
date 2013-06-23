@@ -153,7 +153,7 @@ class Mixture(Distribution):
 			new_value = self.evaluate(data)
 
 			if Distribution.VERBOSITY >= 2:
-				print 'Epoch ', epoch, '\t', new_value
+				print 'Epoch ', epoch + 1, '\t', new_value
 
 			if value - new_value < threshold:
 				if Distribution.VERBOSITY >= 1:
