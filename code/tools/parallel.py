@@ -106,7 +106,7 @@ def map(function, arguments, max_processes=None):
 		"""
 
 		# compute random seed
-		rnd_seed = int(1e6 * rnd + 1e6 * time())
+		rnd_seed = int(1e6 * rnd + 1e6 * time()) % 4294967295
 
 		# without it, different processes are likely to use the same seed
 		numpy_seed(rnd_seed)
