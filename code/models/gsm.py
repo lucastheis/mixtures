@@ -7,7 +7,7 @@ __author__ = 'Lucas Theis <lucas@tuebingen.mpg.de>'
 __docformat__ = 'epytext'
 
 from numpy import ones, zeros, zeros_like, dot, multiply, sum, mean, cov
-from numpy import sqrt, exp, log, pi, squeeze, diag, eye
+from numpy import sqrt, exp, log, pi, squeeze, diag, eye, asarray
 from numpy.random import rand, randn
 from numpy.linalg import inv, det, eig, slogdet, cholesky
 from distribution import Distribution
@@ -75,8 +75,11 @@ class GSM(Distribution):
 		self.scales = 0.75 + rand(num_scales) / 2.
 
 		# initial precision matrix
-		self.precision = inv(cov(randn(dim, dim * dim)))
-		self.precision /= pow(det(self.precision), 1. / self.dim)
+		if dim == 1:
+			self.precision = asarray([[.75 + rand() / 2.]])
+		else:
+			self.precision = inv(cov(randn(dim, dim * dim)))
+			self.precision /= pow(det(self.precision), 1. / self.dim)
 
 		# initial mean
 		self.mean = zeros([dim, 1])
